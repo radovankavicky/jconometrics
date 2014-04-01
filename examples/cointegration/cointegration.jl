@@ -46,5 +46,5 @@ adj_close = adj_close[good_data, :]
 p = FramedPlot(aspect_ratio=0.33)
 add(p ,Curve(float64(flipud(good_data)) ,flipud(adj_close[: ,1]) ,color="red"))
 add(p ,Curve(float64(flipud(good_data)) ,flipud(adj_close[: ,2]) ,color="blue"))
-
 file(p,"gld-gdx-prices.png")
+

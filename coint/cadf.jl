@@ -1,4 +1,6 @@
 function cadf(y ,x ,p ,nlag)
+# Cointegrating Augmented Dickey-Fuller test
+
 # ##################################################################
 # Original comments and function signature from spatial-econometrics
 # ##################################################################
@@ -44,61 +46,63 @@ function cadf(y ,x ,p ,nlag)
 # Modeled after a similar Gauss routine by
 # Sam Ouliaris, in a package called COINT
 
-# ####################################################
+# ######################################################
 # Porting to Julia information
-# ####################################################
+# ######################################################
 
 # Author:	Adrian Torrie
-# Email:	adriantorrie at google's online mail dot com
+# Email:	adriantorrie@gmail.com
 # Linkedin:	www.linkedin.com/in/adriantorrie/
 
-# ####################################################
+# ######################################################
 
-# Validate incoming data
-if (p < -1)
-	error("p cannot be < -1 in cadf")
+	# Validate incoming data
+	if p < -1
+		error("p cannot be < -1 in cadf")
+	end
+
+	(nobs, junk) = size(x)
+	if (nobs - (2 * nlag) + 1) < 1
+		error("nlags is too large in cadf negative degrees of freedom")
+	end
+
+	# Assign locals
+	y   = detrend(y ,p)
+	x	= detrend(x ,p)
+	b   = inv(x' * x) * x' * y
+	r   = y - x * b
+	dep = tdiff(r ,1)
+	dep = trimr(dep ,1 ,0)
+	k   = 0     
+	z   = trimr(lag(r ,1) ,1 ,0) 
+	k   = k + 1 
+
+	while k <= nlag
+		z = [z lag(dep ,k)]
+		k = k + 1 
+	end  
+
+	 z    = trimr(z ,nlag ,0) 
+	 dep  = trimr(dep ,nlag ,0) 
+	 beta = detrend(z ,0) \ detrend(dep ,0) 
+
+	 # BUG fix suggested by 
+	 # Nick Firoozye
+	 # Sanford C. Bernstein, Inc
+	 # 767 Fifth Avenue, #21-49
+	 # New York, NY 10153
+	 # res     = dep - z*beta 
+	 res  = detrend(dep ,0) - detrend(z ,0) * beta 
+	 so   = (res' * res) / (rows(dep) - cols(z))
+	 var_cov = so * inv(z' * z) 
+	 
+	return
+	(
+		beta(1 ,1)							# results.alpha
+		,beta(1 ,1) / sqrt(var_cov(1 ,1))	# results.adf
+		,rztcrit(nobs ,cols(x) ,p)			# results.crit
+		,nlag 								# results.nlag
+		,cols(x)							# results.nvar
+		,"cadf"								# results.meth
+	)
 end
-
-nobs = rows(x)
-if (nobs - (2 * nlag) + 1 < 1)
-	error("nlags is too large in cadf negative degrees of freedom")
-end
-
-# Assign locals
-y   = detrend(y ,p)
-x	= detrend(x ,p)
-b   = inv(x' * x) * x' * y
-r   = y - x * b
-dep = tdiff(r ,1)
-dep = trimr(dep ,1 ,0)
-k   = 0     
-z   = trimr(lag(r ,1) ,1 ,0) 
-k   = k + 1 
-
-while (k <= nlag)
-	z = [z lag(dep,k)]
-	k = k + 1 
-end  
-
- z    = trimr(z ,nlag ,0) 
- dep  = trimr(dep ,nlag ,0) 
- beta = detrend(z ,0) \ detrend(dep ,0) 
-
- # BUG fix suggested by 
- # Nick Firoozye
- # Sanford C. Bernstein, Inc
- # 767 Fifth Avenue, #21-49
- # New York, NY 10153
- # res     = dep - z*beta 
- res  = detrend(dep ,0) - detrend(z ,0) * beta 
-
- so   = (res' * res) / (rows(dep) - cols(z))
- var_cov = so * inv(z' * z) 
- 
- return
-	beta(1 ,1)							# results.alpha
-	,beta(1 ,1) / sqrt(var_cov(1 ,1))	# results.adf
-	,rztcrit(nobs ,cols(x) ,p)			# results.crit
-	,nlag 								# results.nlag
-	,cols(x)							# results.nvar
-	,"cadf"								# results.meth

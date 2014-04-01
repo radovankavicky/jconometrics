@@ -1,4 +1,8 @@
 function rztcrit(nobs ,k ,p)
+# Return critical values for the Zt statistic used in 
+# Cointegrating Augmented Dickey-Fuller test
+# See: cadf()
+
 # ##################################################################
 # Original comments and function signature from spatial-econometrics
 # ##################################################################
@@ -39,7 +43,7 @@ function rztcrit(nobs ,k ,p)
 # ####################################################
 
 # Author:	Adrian Torrie
-# Email:	adriantorrie at google's online mail dot com
+# Email:	adriantorrie@gmail.com
 # Linkedin:	www.linkedin.com/in/adriantorrie/
 # ####################################################
 
@@ -241,7 +245,7 @@ elseif 1 <= nobs && nobs <=199
  	crit = zeros(6,1)
  else 
  	n = (k - 1) * 7 + p + 2
- 	crit = zt(n ,:)'
+ 	crit = zt[n ,:]'
  end
 
  return crit
