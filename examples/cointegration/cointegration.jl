@@ -1,4 +1,7 @@
+include("../../coint/cadf.jl")
+
 using Winston
+
 # Bring in the data without the headers and only
 # get the "dates" and "adjusted close" columns
 #
@@ -48,3 +51,4 @@ add(p ,Curve(float64(flipud(good_data)) ,flipud(adj_close[: ,1]) ,color="red"))
 add(p ,Curve(float64(flipud(good_data)) ,flipud(adj_close[: ,2]) ,color="blue"))
 file(p,"gld-gdx-prices.png")
 
+cadf(adj_close[: ,1], adj_close[: ,2], 0 ,1)

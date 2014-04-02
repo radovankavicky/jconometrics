@@ -1,3 +1,17 @@
+include("./detrend.jl")
+include("./rztcrit.jl")
+
+include("../util/lag.jl")
+include("../util/tdiff.jl")
+include("../util/trimr.jl")
+
+using Detrend
+# using Rztcrit
+# using Lag
+# using Tdiff
+# using Trimr
+
+
 function cadf(y ,x ,p ,nlag)
 # Cointegrating Augmented Dickey-Fuller test
 
@@ -22,13 +36,14 @@ function cadf(y ,x ,p ,nlag)
 #
 # ------------------------------------------------------------
 # RETURNS:	results structure
-#			results.meth  = 'cadf'
+#			
 #			results.alpha = autoregressive parameter estimate
 #			results.adf   = ADF t-statistic
 #			results.crit  = (6 x 1) vector of critical values
 #			                [1% 5% 10% 90% 95% 99%] quintiles   
 #			results.nvar  = cols(x)
 #			results.nlag  = nlag
+#			results.meth  = 'cadf'
 #---------------------------------------------------
 # SEE ALSO: prt_coint()
 #--------------------------------------------------- 
@@ -61,40 +76,40 @@ function cadf(y ,x ,p ,nlag)
 		error("p cannot be < -1 in cadf")
 	end
 
-	(nobs, junk) = size(x)
+	nobs = size(x ,1)
 	if (nobs - (2 * nlag) + 1) < 1
 		error("nlags is too large in cadf negative degrees of freedom")
 	end
 
 	# Assign locals
-	y   = detrend(y ,p)
+	y	= detrend(y ,p)
 	x	= detrend(x ,p)
-	b   = inv(x' * x) * x' * y
-	r   = y - x * b
-	dep = tdiff(r ,1)
-	dep = trimr(dep ,1 ,0)
-	k   = 0     
-	z   = trimr(lag(r ,1) ,1 ,0) 
-	k   = k + 1 
+	b	= inv(x' * x) * x' * y
+	r	= y - x * b
+	dep	= tdiff(r ,1)
+	dep	= trimr(dep ,1 ,0)
+	k	= 0     
+	z	= trimr(lag(r ,1 ,0) ,1 ,0) 
+	k	= k + 1 
 
 	while k <= nlag
 		z = [z lag(dep ,k)]
 		k = k + 1 
-	end  
+	end
 
-	 z    = trimr(z ,nlag ,0) 
-	 dep  = trimr(dep ,nlag ,0) 
-	 beta = detrend(z ,0) \ detrend(dep ,0) 
+	z		= trimr(z ,nlag ,0) 
+	dep		= trimr(dep ,nlag ,0) 
+	beta	= detrend(z ,0) \ detrend(dep ,0) 
 
-	 # BUG fix suggested by 
-	 # Nick Firoozye
-	 # Sanford C. Bernstein, Inc
-	 # 767 Fifth Avenue, #21-49
-	 # New York, NY 10153
-	 # res     = dep - z*beta 
-	 res  = detrend(dep ,0) - detrend(z ,0) * beta 
-	 so   = (res' * res) / (rows(dep) - cols(z))
-	 var_cov = so * inv(z' * z) 
+	# BUG fix suggested by 
+	# Nick Firoozye
+	# Sanford C. Bernstein, Inc
+	# 767 Fifth Avenue, #21-49
+	# New York, NY 10153
+	# res     = dep - z*beta 
+	res  = detrend(dep ,0) - detrend(z ,0) * beta 
+	so   = (res' * res) / (rows(dep) - cols(z))
+	var_cov = so * inv(z' * z) 
 	 
 	return
 	(
